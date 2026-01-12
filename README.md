@@ -507,9 +507,9 @@ If Crosspulse helps your project, give it a ⭐️ on GitHub!
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/crosspulse/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/crosspulse/discussions)
-- **Email**: support@crosspulse.dev
+- **Issues**: [GitHub Issues](https://github.com/AnarDevStudio/crosspulse/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/AnarDevStudio/crosspulse/discussions)
+- **Email**: anardevstudio@gmail.com
 
 ---
 
