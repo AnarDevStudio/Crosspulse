@@ -16,13 +16,14 @@ from typing import Callable, Dict, Any, Optional
 class Crosspulse:
     """
     Crosspulse - Python ↔ JavaScript Bridge
-    İki yönlü iletişim: Hem dinle, hem çağır
+    Bidirectional communication: both listening and calling
     """
     
     def __init__(self, mode: str = "listen"):
         """
-        mode: "listen" = JS'den gelen çağrıları dinle
-              "connect" = JS scriptine bağlan ve onun metodlarını çağır
+        mode:
+        "listen"  = listen for method calls coming from JavaScript
+        "connect" = connect to a JavaScript script and call its methods
         """
         self.mode = mode
         self.handlers: Dict[str, Callable] = {}
@@ -34,12 +35,12 @@ class Crosspulse:
         
     
     def register(self, method_name: str, callback: Callable):
-        """Bir metodu kaydet (JS'den çağrılabilir)"""
+        """Register a method (can be called from JavaScript)"""
         self.handlers[method_name] = callback
         return self
     
     def listen(self):
-        """JS'den gelen çağrıları dinle"""
+        """Listen for incoming calls from JavaScript"""
         if self.mode != "listen":
             raise Exception("Crosspulse must be in 'listen' mode")
             
@@ -51,7 +52,7 @@ class Crosspulse:
             try:
                 request = json.loads(line)
                 
-                # JS'den gelen çağrı
+                # Call coming from JavaScript
                 if "method" in request:
                     method = request.get("method")
                     args = request.get("args", [])
@@ -64,7 +65,7 @@ class Crosspulse:
                     else:
                         response = {"id": req_id, "success": False, "error": f"Method not found: {method}"}
                 
-                # JS'den gelen cevap (biz çağırmıştık)
+                # Response coming from JavaScript (we initiated the call)
                 elif "id" in request and request["id"] in self.callbacks:
                     callback = self.callbacks.pop(request["id"])
                     if request.get("success"):
@@ -78,10 +79,8 @@ class Crosspulse:
             
             print(json.dumps(response), flush=True)
     
-    # ==================== CONNECT MODE ====================
-    
     def connect(self, js_file: str):
-        """JS scriptine bağlan"""
+        """Connect to a JavaScript script"""
         if self.mode != "connect":
             raise Exception("Crosspulse must be in 'connect' mode")
         
@@ -94,12 +93,11 @@ class Crosspulse:
             bufsize=1
         )
         
-        # Çıktıları dinle
         threading.Thread(target=self._read_js_output, daemon=True).start()
         return self
     
     def _read_js_output(self):
-        """JS'den gelen mesajları oku"""
+        """Read incoming messages from JavaScript"""
         for line in self.js_process.stdout:
             line = line.strip()
             if not line:
@@ -108,7 +106,6 @@ class Crosspulse:
             try:
                 response = json.loads(line)
                 
-                # JS'den gelen çağrı cevabı
                 if "id" in response and response["id"] in self.callbacks:
                     callback = self.callbacks.pop(response["id"])
                     if response.get("success"):
@@ -117,8 +114,7 @@ class Crosspulse:
                     else:
                         callback["event"].set()
                         callback["error"] = response.get("error")
-                
-                # JS'den gelen metod çağrısı
+
                 elif "method" in response:
                     method = response.get("method")
                     args = response.get("args", [])
@@ -137,7 +133,7 @@ class Crosspulse:
                 print(f"Error reading JS output: {e}", file=sys.stderr)
     
     def call(self, method: str, *args) -> Any:
-        """JS'deki bir metodu çağır"""
+        """Call a method defined in JavaScript"""
         if not self.js_process:
             raise Exception("Not connected. Call connect() first.")
         
@@ -159,7 +155,7 @@ class Crosspulse:
         self.js_process.stdin.write(json.dumps(request) + "\n")
         self.js_process.stdin.flush()
         
-        # Cevap bekle
+        # Wait for response
         event.wait(timeout=10)
         
         if callback_data["error"]:
@@ -168,9 +164,8 @@ class Crosspulse:
         return callback_data["result"]
     
     def disconnect(self):
-        """Bağlantıyı kapat"""
+        """Close the connection"""
         if self.js_process:
             self.js_process.terminate()
             self.js_process.wait()
             self.js_process = None
-

@@ -6,20 +6,20 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software.
 
-
 const { spawn } = require("child_process");
 const path = require("path");
 
 class Crosspulse {
   /**
    * Crosspulse - JavaScript ↔ Python Bridge
-   * İki yönlü iletişim: Hem dinle, hem çağır
+   * Bidirectional communication: both listening and calling
    */
   
   constructor(mode = "connect") {
     /**
-     * mode: "connect" = Python'a bağlan ve onun metodlarını çağır
-     *       "listen" = Python'dan gelen çağrıları dinle
+     * mode:
+     * "connect" = connect to Python and call its methods
+     * "listen"  = listen for method calls coming from Python
      */
     this.mode = mode;
     this.handlers = new Map();
@@ -29,11 +29,9 @@ class Crosspulse {
     this.requestId = 0;
   }
 
-  // ==================== CONNECT MODE ====================
-
   async connect(pythonFile) {
     /**
-     * Python scriptine bağlan
+     * Connect to a Python script
      */
     if (this.mode !== "connect") {
       throw new Error("Crosspulse must be in 'connect' mode");
@@ -55,7 +53,7 @@ class Crosspulse {
           try {
             const response = JSON.parse(line);
             
-            // Python'dan gelen çağrı cevabı
+            // Response to a method call made to Python
             if (response.id !== undefined && this.callbacks.has(response.id)) {
               const callback = this.callbacks.get(response.id);
               this.callbacks.delete(response.id);
@@ -67,7 +65,7 @@ class Crosspulse {
               }
             }
             
-            // Python'dan gelen metod çağrısı
+            // Method call coming from Python
             else if (response.method) {
               this._handleIncomingCall(response);
             }
@@ -92,14 +90,14 @@ class Crosspulse {
         reject(err);
       });
 
-      // Process hazır
+      // Process is ready
       setTimeout(() => resolve(this), 100);
     });
   }
 
   call(method, ...args) {
     /**
-     * Python'daki bir metodu çağır
+     * Call a method defined in Python
      */
     return new Promise((resolve, reject) => {
       if (!this.process) {
@@ -122,7 +120,7 @@ class Crosspulse {
 
   disconnect() {
     /**
-     * Bağlantıyı kapat
+     * Close the connection
      */
     if (this.process) {
       this.process.kill();
@@ -134,7 +132,7 @@ class Crosspulse {
 
   register(methodName, callback) {
     /**
-     * Bir metodu kaydet (Python'dan çağrılabilir)
+     * Register a method that can be called from Python
      */
     this.handlers.set(methodName, callback);
     return this;
@@ -142,7 +140,7 @@ class Crosspulse {
 
   listen() {
     /**
-     * Python'dan gelen çağrıları dinle (stdin üzerinden)
+     * Listen for incoming method calls from Python (via stdin)
      */
     if (this.mode !== "listen") {
       throw new Error("Crosspulse must be in 'listen' mode");
@@ -175,7 +173,7 @@ class Crosspulse {
 
   _handleIncomingCall(request) {
     /**
-     * Gelen metod çağrısını işle
+     * Handle an incoming method call
      */
     const method = request.method;
     const args = request.args || [];
@@ -194,7 +192,7 @@ class Crosspulse {
       response = { id, success: false, error: `Method not found: ${method}` };
     }
 
-    // Cevabı gönder
+    // Send the response back
     if (this.mode === "connect" && this.process) {
       this.process.stdin.write(JSON.stringify(response) + "\n");
     } else if (this.mode === "listen") {
@@ -204,5 +202,3 @@ class Crosspulse {
 }
 
 module.exports = Crosspulse;
-
-
