@@ -1,0 +1,36 @@
+{
+  "name": "crosspulse",
+  "version": "1.0.0",
+  "description": "Call Python from Node.js and Node.js from Python easily with Crosspulse’s lightweight bridge.",
+  "main": "crosspulse.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AnarDevStudio/Crosspulse.git"
+  },
+  "keywords": [
+    "nodejs",
+    "javascript",
+    "python",
+    "events",
+    "ipc",
+    "stdout",
+    "stdin",
+    "interop",
+    "bridge",
+    "event-driven",
+    "cross-language",
+    "python-javascript"
+  ],
+  "author": "AnarDevStudio",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AnarDevStudio/Crosspulse/issues"
+  },
+  "homepage": "https://github.com/AnarDevStudio/Crosspulse#readme"
+}
