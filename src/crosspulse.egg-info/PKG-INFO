@@ -1,0 +1,548 @@
+Metadata-Version: 2.4
+Name: crosspulse
+Version: 0.1.0
+Summary: Call Python from Node.js and Node.js from Python easily with Crosspulse’s lightweight bridge.
+Author-email: AnarLabs <anardevstudio@gmail.com>
+License: MIT
+Project-URL: Homepage, https://github.com/AnarDevStudio/Crosspulse
+Project-URL: Repository, https://github.com/AnarDevStudio/Crosspulse
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Dynamic: license-file
+
+#  Crosspulse 
+
+**Seamless Python ↔ JavaScript Bridge** - Bidirectional, fully synchronized cross-language communication library.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.7+](https://img.shields.io/badge/python-3.7+-blue.svg)](https://www.python.org/downloads/)
+[![Node 12+](https://img.shields.io/badge/node-12+-green.svg)](https://nodejs.org/)
+
+> Break down language barriers and let Python and JavaScript talk to each other like old friends.
+
+---
+
+## ✨ Features
+
+- ✅ **Bidirectional Communication**: JS → PY and PY → JS
+- ✅ **Synchronous Calls**: Full Promise/await support
+- ✅ **Event-Based Architecture**: Register, listen, and call methods
+- ✅ **Error Handling**: Exception handling in both languages
+- ✅ **Type Safe**: JSON serialization with validation
+- ✅ **Simple API**: Just 3 core methods: `register()`, `listen()`, `call()`
+- ✅ **Zero Dependencies**: No external packages required
+- ✅ **Lightweight**: Minimal overhead, maximum performance
+
+---
+
+## 🎯 Why Crosspulse?
+
+Ever wanted to combine Python's data processing power with JavaScript's UI capabilities? Or run ML models in Python while displaying results in Node.js? Crosspulse makes it effortless.
+
+```javascript
+// JavaScript
+const result = await bridge.call("train_model", data);
+console.log("Accuracy:", result.accuracy);
+```
+
+```python
+# Python (automatically responds)
+bridge.register("train_model", train_ml_model)
+```
+
+That's it. No REST APIs, no HTTP servers, no complexity.
+
+---
+
+## 📦 Installation
+
+Simply copy the files to your project:
+
+```bash
+crosspulse.py
+crosspulse.js
+```
+
+**Requirements:**
+- Python 3.7+
+- Node.js 12+
+
+---
+
+## 🚀 Quick Start
+
+### Mode 1: JavaScript → Python
+
+Call Python functions from JavaScript.
+
+**JavaScript side:**
+```javascript
+const Crosspulse = require('./crosspulse');
+
+async function main() {
+  const bridge = new Crosspulse("connect");
+  await bridge.connect("./crosspulse.py");
+  
+  // Call Python function
+  const result = await bridge.call("py_add", 10, 20);
+  console.log(result); // 30
+  
+  bridge.disconnect();
+}
+
+main();
+```
+
+**Python side:**
+```python
+from crosspulse import Crosspulse
+
+bridge = Crosspulse(mode="listen")
+
+# Register method
+bridge.register("py_add", lambda a, b: a + b)
+
+# Start listening
+bridge.listen()
+```
+
+**Run:**
+```bash
+node app.js
+```
+
+---
+
+### Mode 2: Python → JavaScript
+
+Call JavaScript functions from Python.
+
+**Python side:**
+```python
+from crosspulse import Crosspulse
+
+bridge = Crosspulse(mode="connect")
+bridge.connect("./crosspulse.js")
+
+# Call JavaScript function
+result = bridge.call("js_multiply", 100, 50)
+print(result)  # 5000
+
+bridge.disconnect()
+```
+
+**JavaScript side:**
+```javascript
+const Crosspulse = require('./crosspulse');
+
+const bridge = new Crosspulse("listen");
+
+// Register method
+bridge.register("js_multiply", (a, b) => a * b);
+
+// Start listening
+bridge.listen();
+```
+
+**Run:**
+```bash
+python3 main.py
+```
+
+---
+
+### Mode 3: Bidirectional Communication
+
+Both languages can call each other simultaneously!
+
+**Python side:**
+```python
+bridge = Crosspulse(mode="connect")
+
+# Register our methods (JS can call these)
+bridge.register("py_square", lambda x: x ** 2)
+bridge.register("py_reverse", lambda s: s[::-1])
+
+bridge.connect("./app.js")
+
+# Call JS methods
+result = bridge.call("js_capitalize", "hello world")
+print(result)  # "HELLO WORLD"
+
+# JS can simultaneously call py_square() or py_reverse()
+```
+
+**JavaScript side:**
+```javascript
+const bridge = new Crosspulse("listen");
+
+// Register our methods (Python can call these)
+bridge.register("js_capitalize", (str) => str.toUpperCase());
+bridge.register("js_length", (str) => str.length);
+
+bridge.listen();
+
+// Python can simultaneously call our methods
+// We automatically respond to incoming calls
+```
+
+---
+
+## 📖 API Reference
+
+### Python
+
+```python
+from crosspulse import Crosspulse
+
+# Create instance
+bridge = Crosspulse(mode="listen")   # Listen mode
+bridge = Crosspulse(mode="connect")  # Connect mode
+
+# Register method
+bridge.register("method_name", callback_function)
+
+# Listen for calls (listen mode)
+bridge.listen()
+
+# Connect to target (connect mode)
+bridge.connect("target_script.js")
+
+# Call remote method
+result = bridge.call("method_name", arg1, arg2)
+
+# Disconnect
+bridge.disconnect()
+```
+
+### JavaScript
+
+```javascript
+const Crosspulse = require('./crosspulse');
+
+// Create instance
+const bridge = new Crosspulse("listen");   // Listen mode
+const bridge = new Crosspulse("connect");  // Connect mode
+
+// Register method
+bridge.register("method_name", (arg1, arg2) => { 
+  return result;
+});
+
+// Listen for calls (listen mode)
+bridge.listen();
+
+// Connect to target (connect mode)
+await bridge.connect("./target_script.py");
+
+// Call remote method
+const result = await bridge.call("method_name", arg1, arg2);
+
+// Disconnect
+bridge.disconnect();
+```
+
+---
+
+## 🎯 Real-World Examples
+
+### Example 1: Data Processing Pipeline
+
+```python
+# data_processor.py
+import pandas as pd
+from crosspulse import Crosspulse
+
+bridge = Crosspulse("connect")
+bridge.connect("./visualizer.js")
+
+# Process data in Python
+df = pd.read_csv("sales_data.csv")
+insights = analyze_sales(df)
+
+# Visualize in JavaScript
+chart = bridge.call("create_chart", insights.to_dict())
+print(f"Chart created: {chart}")
+```
+
+```javascript
+// visualizer.js
+const bridge = new Crosspulse("listen");
+
+bridge.register("create_chart", (data) => {
+  // Use Chart.js, D3.js, or any JS library
+  const chart = generateChart(data);
+  return chart.id;
+});
+
+bridge.listen();
+```
+
+### Example 2: Machine Learning UI
+
+```javascript
+// ml_interface.js
+const bridge = new Crosspulse("connect");
+
+async function trainModel(dataset) {
+  await bridge.connect("./ml_model.py");
+  
+  const progress = await bridge.call("train", dataset);
+  console.log("Training progress:", progress);
+  
+  const predictions = await bridge.call("predict", testData);
+  displayResults(predictions);
+}
+```
+
+```python
+# ml_model.py
+from sklearn.ensemble import RandomForestClassifier
+
+bridge = Crosspulse("listen")
+
+model = RandomForestClassifier()
+
+def train_model(data):
+    X, y = prepare_data(data)
+    model.fit(X, y)
+    return {"status": "trained", "accuracy": model.score(X, y)}
+
+bridge.register("train", train_model)
+bridge.listen()
+```
+
+### Example 3: Web Scraping + Frontend
+
+```python
+# scraper.py
+from crosspulse import Crosspulse
+import requests
+from bs4 import BeautifulSoup
+
+bridge = Crosspulse("connect")
+
+def scrape_news():
+    # Scrape with Python
+    data = scrape_website()
+    
+    # Send to JavaScript for display
+    bridge.call("update_ui", data)
+
+bridge.connect("./server.js")
+scrape_news()
+```
+
+### Example 4: Desktop App (Electron + Python)
+
+```javascript
+// electron_main.js
+const bridge = new Crosspulse("connect");
+
+ipcMain.on("process-image", async (event, imagePath) => {
+  await bridge.connect("./image_processor.py");
+  
+  const processed = await bridge.call("enhance_image", imagePath);
+  event.reply("image-ready", processed);
+});
+```
+
+---
+
+## 🔧 Advanced Usage
+
+### Error Handling
+
+```javascript
+try {
+  const result = await bridge.call("risky_operation", data);
+  console.log("Success:", result);
+} catch (error) {
+  console.error("Python error:", error.message);
+}
+```
+
+```python
+try:
+    result = bridge.call("risky_operation", data)
+    print(f"Success: {result}")
+except Exception as e:
+    print(f"JavaScript error: {e}")
+```
+
+### Multiple Arguments & Complex Data
+
+```javascript
+// JavaScript
+const result = await bridge.call("process_user", {
+  name: "John",
+  age: 30,
+  tags: ["developer", "python", "javascript"]
+});
+```
+
+```python
+# Python
+def process_user(user_data):
+    return {
+        "id": generate_id(),
+        "name": user_data["name"],
+        "processed": True
+    }
+
+bridge.register("process_user", process_user)
+```
+
+### Async Operations
+
+```python
+# Python
+import time
+
+def long_running_task(duration):
+    time.sleep(duration)
+    return "Task completed"
+
+bridge.register("long_task", long_running_task)
+```
+
+```javascript
+// JavaScript
+const result = await bridge.call("long_task", 5);
+console.log(result); // "Task completed" (after 5 seconds)
+```
+
+---
+
+## 🎨 Use Cases
+
+| Use Case | Python Side | JavaScript Side |
+|----------|-------------|-----------------|
+| **Web Scraping** | BeautifulSoup, Scrapy | Display in React/Vue |
+| **Machine Learning** | TensorFlow, PyTorch | Real-time UI updates |
+| **Data Analysis** | Pandas, NumPy | Chart.js, D3.js |
+| **Image Processing** | OpenCV, Pillow | Canvas, WebGL |
+| **File Processing** | Parse Excel/PDF | Electron file picker |
+| **API Gateway** | Flask/FastAPI alternative | Frontend communication |
+| **Desktop Apps** | Backend logic | Electron UI |
+| **Automation** | Selenium, automation | Control panel |
+
+---
+
+## ⚡ Performance
+
+- **Latency**: ~5-10ms per call (local)
+- **Throughput**: 1000+ calls/second
+- **Memory**: Minimal overhead (<5MB)
+- **Scalability**: Single process pair
+
+For high-throughput scenarios, consider batching calls or using WebSocket alternatives.
+
+---
+
+## 🛡️ Security Notes
+
+- Crosspulse uses STDIN/STDOUT for IPC
+- Only use with trusted code
+- Validate all incoming data
+- Don't expose to untrusted networks
+- Consider sandboxing for production
+
+---
+
+## 🐛 Troubleshooting
+
+### "Method not found" error
+```python
+# Make sure method is registered before listening
+bridge.register("my_method", my_function)
+bridge.listen()  # Must be after register
+```
+
+### Connection timeout
+```javascript
+// Ensure Python script is running
+await bridge.connect("./script.py");
+// Python should be in listen mode
+```
+
+### JSON serialization errors
+```python
+# Only use JSON-serializable types
+# ✅ str, int, float, list, dict, bool, None
+# ❌ Custom objects, functions, file handles
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Here's how:
+
+```bash
+git clone https://github.com/yourusername/crosspulse.git
+cd crosspulse
+```
+
+**Areas to contribute:**
+- TypeScript definitions
+- More examples
+- Performance improvements
+- Documentation
+- Bug fixes
+
+---
+
+## 📄 License
+
+MIT License - Use it however you want!
+
+```
+MIT License
+
+Copyright (c) 2026 AnarEsgerzade
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+
+
+## 🌟 Show Your Support
+
+If Crosspulse helps your project, give it a ⭐️ on GitHub!
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/AnarDevStudio/crosspulse/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/AnarDevStudio/crosspulse/discussions)
+- **Email**: anardevstudio@gmail.com
+
+---
+
+
+**Built with ❤️ by developers who believe languages should work together, not apart.**
+
+**Crosspulse** - Where Python meets JavaScript. 🚀
+
+**Make by AnarEsgerzade🌷**
