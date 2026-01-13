@@ -44,7 +44,19 @@ That's it. No REST APIs, no HTTP servers, no complexity.
 
 ## 📦 Installation
 
-Simply copy the files to your project:
+**Download Manual:**
+
+JavaScript:
+```bash
+npm install crosspulse 
+```
+
+Python:
+```bash
+pip install crosspulse
+```
+
+**or Simply copy the files to your project:**
 
 ```bash
 crosspulse.py
@@ -65,32 +77,41 @@ Call Python functions from JavaScript.
 
 **JavaScript side:**
 ```javascript
-const Crosspulse = require('./crosspulse');
+import Crosspulse from "crosspulse/src/crosspulse.js";
 
 async function main() {
+  // Create a bridge in "connect" mode
   const bridge = new Crosspulse("connect");
-  await bridge.connect("./crosspulse.py");
   
-  // Call Python function
+  // Connect to the Python script
+  await bridge.connect("python main.py");
+  
+  // Call a Python function and get the result
   const result = await bridge.call("py_add", 10, 20);
   console.log(result); // 30
   
+  // Disconnect the bridge
   bridge.disconnect();
 }
 
+// Run the main function
 main();
 ```
 
 **Python side:**
 ```python
-from crosspulse import Crosspulse
+import crosspulse
 
-bridge = Crosspulse(mode="listen")
+# Create a bridge in "listen" mode
+bridge = crosspulse.Crosspulse(mode="listen")
 
-# Register method
-bridge.register("py_add", lambda a, b: a + b)
+# Register a Python method that JS can call
+def py_add(a, b):
+    return a + b
 
-# Start listening
+bridge.register("py_add", py_add)
+
+# Start listening for incoming calls from JavaScript
 bridge.listen()
 ```
 
@@ -107,34 +128,39 @@ Call JavaScript functions from Python.
 
 **Python side:**
 ```python
-from crosspulse import Crosspulse
+import crosspulse
 
-bridge = Crosspulse(mode="connect")
-bridge.connect("./crosspulse.js")
+# Create a bridge in "connect" mode
+bridge = crosspulse.Crosspulse(mode="connect")
 
-# Call JavaScript function
+# Connect to the JavaScript script
+bridge.connect("node app.js")
+
+# Call a JavaScript function and get the result
 result = bridge.call("js_multiply", 100, 50)
 print(result)  # 5000
 
+# Disconnect the bridge
 bridge.disconnect()
 ```
 
 **JavaScript side:**
 ```javascript
-const Crosspulse = require('./crosspulse');
+import Crosspulse from "crosspulse/src/crosspulse.js";
 
+// Create a bridge in "listen" mode
 const bridge = new Crosspulse("listen");
 
-// Register method
+// Register a JavaScript method that Python can call
 bridge.register("js_multiply", (a, b) => a * b);
 
-// Start listening
+// Start listening for incoming calls from Python
 bridge.listen();
 ```
 
 **Run:**
 ```bash
-python3 main.py
+python main.py
 ```
 
 ---
@@ -145,33 +171,47 @@ Both languages can call each other simultaneously!
 
 **Python side:**
 ```python
-bridge = Crosspulse(mode="connect")
+import crosspulse
 
-# Register our methods (JS can call these)
-bridge.register("py_square", lambda x: x ** 2)
-bridge.register("py_reverse", lambda s: s[::-1])
+# Create a bridge in "connect" mode
+bridge = crosspulse.Crosspulse(mode="connect")
 
-bridge.connect("./app.js")
+# Register Python methods that JavaScript can call
+def py_square(x):
+    return x ** 2
 
-# Call JS methods
+def py_reverse(s):
+    return s[::-1]
+
+bridge.register("py_square", py_square)
+bridge.register("py_reverse", py_reverse)
+
+# Connect to the JavaScript script
+bridge.connect("node app.js")
+
+# Call JavaScript methods
 result = bridge.call("js_capitalize", "hello world")
 print(result)  # "HELLO WORLD"
 
-# JS can simultaneously call py_square() or py_reverse()
+# JavaScript can call py_square() or py_reverse() one request at a time
 ```
 
 **JavaScript side:**
 ```javascript
+import Crosspulse from "crosspulse/src/crosspulse.js";
+
+// Create a bridge in "listen" mode
 const bridge = new Crosspulse("listen");
 
-// Register our methods (Python can call these)
+// Register JavaScript methods that Python can call
 bridge.register("js_capitalize", (str) => str.toUpperCase());
 bridge.register("js_length", (str) => str.length);
 
+// Start listening for incoming calls from Python
 bridge.listen();
 
-// Python can simultaneously call our methods
-// We automatically respond to incoming calls
+// Python can call these methods one request at a time
+// Incoming calls are automatically handled
 ```
 
 ---
@@ -194,7 +234,7 @@ bridge.register("method_name", callback_function)
 bridge.listen()
 
 # Connect to target (connect mode)
-bridge.connect("target_script.js")
+bridge.connect("node target_script.js")
 
 # Call remote method
 result = bridge.call("method_name", arg1, arg2)
@@ -206,7 +246,7 @@ bridge.disconnect()
 ### JavaScript
 
 ```javascript
-const Crosspulse = require('./crosspulse');
+import Crosspulse from "crosspulse/src/crosspulse.js";
 
 // Create instance
 const bridge = new Crosspulse("listen");   // Listen mode
@@ -221,7 +261,7 @@ bridge.register("method_name", (arg1, arg2) => {
 bridge.listen();
 
 // Connect to target (connect mode)
-await bridge.connect("./target_script.py");
+await bridge.connect("python target_script.py");
 
 // Call remote method
 const result = await bridge.call("method_name", arg1, arg2);
@@ -242,7 +282,7 @@ import pandas as pd
 from crosspulse import Crosspulse
 
 bridge = Crosspulse("connect")
-bridge.connect("./visualizer.js")
+bridge.connect("node visualizer.js")
 
 # Process data in Python
 df = pd.read_csv("sales_data.csv")
@@ -255,6 +295,8 @@ print(f"Chart created: {chart}")
 
 ```javascript
 // visualizer.js
+import Crosspulse from "crosspulse/src/crosspulse.js";
+
 const bridge = new Crosspulse("listen");
 
 bridge.register("create_chart", (data) => {
@@ -270,10 +312,12 @@ bridge.listen();
 
 ```javascript
 // ml_interface.js
+import Crosspulse from "crosspulse/src/crosspulse.js";
+
 const bridge = new Crosspulse("connect");
 
 async function trainModel(dataset) {
-  await bridge.connect("./ml_model.py");
+  await bridge.connect("python ml_model.py");
   
   const progress = await bridge.call("train", dataset);
   console.log("Training progress:", progress);
@@ -286,6 +330,7 @@ async function trainModel(dataset) {
 ```python
 # ml_model.py
 from sklearn.ensemble import RandomForestClassifier
+from crosspulse import Crosspulse
 
 bridge = Crosspulse("listen")
 
@@ -317,7 +362,7 @@ def scrape_news():
     # Send to JavaScript for display
     bridge.call("update_ui", data)
 
-bridge.connect("./server.js")
+bridge.connect("node server.js")
 scrape_news()
 ```
 
@@ -325,10 +370,12 @@ scrape_news()
 
 ```javascript
 // electron_main.js
+import Crosspulse from "crosspulse/src/crosspulse.js";
+
 const bridge = new Crosspulse("connect");
 
 ipcMain.on("process-image", async (event, imagePath) => {
-  await bridge.connect("./image_processor.py");
+  await bridge.connect("python image_processor.py");
   
   const processed = await bridge.call("enhance_image", imagePath);
   event.reply("image-ready", processed);
@@ -450,7 +497,7 @@ bridge.listen()  # Must be after register
 ### Connection timeout
 ```javascript
 // Ensure Python script is running
-await bridge.connect("./script.py");
+await bridge.connect("python script.py");
 // Python should be in listen mode
 ```
 
@@ -468,7 +515,7 @@ await bridge.connect("./script.py");
 Contributions are welcome! Here's how:
 
 ```bash
-git clone https://github.com/yourusername/crosspulse.git
+git clone https://github.com/AnarDevStudio/crosspulse.git
 cd crosspulse
 ```
 
@@ -511,8 +558,6 @@ SOFTWARE.
 
 ---
 
-
-
 ## 🌟 Show Your Support
 
 If Crosspulse helps your project, give it a ⭐️ on GitHub!
@@ -527,9 +572,8 @@ If Crosspulse helps your project, give it a ⭐️ on GitHub!
 
 ---
 
-
 **Built with ❤️ by developers who believe languages should work together, not apart.**
 
 **Crosspulse** - Where Python meets JavaScript. 🚀
 
-**Make by AnarEsgerzade🌷**
+**Made by AnarEsgerzade🌷**
